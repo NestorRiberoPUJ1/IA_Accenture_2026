@@ -3,13 +3,15 @@ import requests
 from dotenv import load_dotenv
 from cprint import cprint
 import time
-import re 
+import re
 import json
 
 load_dotenv()
 
 
-def calcular_costo_peticion(datos: dict, precio_entrada: float, precio_salida: float) -> float:
+def calcular_costo_peticion(
+    datos: dict, precio_entrada: float, precio_salida: float
+) -> float:
     tokens_entrada = datos["usageMetadata"]["promptTokenCount"]
     tokens_salida = datos["usageMetadata"]["candidatesTokenCount"]
     costo_entrada = tokens_entrada * precio_entrada
@@ -18,24 +20,22 @@ def calcular_costo_peticion(datos: dict, precio_entrada: float, precio_salida: f
     return costo_total
 
 
-def armar_peticion(pregunta: str, system_instruction: str, response_schema: dict = None) -> tuple[str, dict]:
-    if (type(pregunta) != str):
+def armar_peticion(
+    pregunta: str, system_instruction: str, response_schema: dict = None
+) -> tuple[str, dict]:
+    if type(pregunta) != str:
         raise ValueError("La pregunta debe ser una cadena de texto.")
     api_key = os.getenv("AI_API_KEY")
     modelo = "gemini-3.5-flash-lite"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}"
     body = {
-        "systemInstruction": {
-            "parts": [{"text": system_instruction}]
-        },
-        "contents": [{
-            "parts": [{"text": pregunta}]
-        }]
+        "systemInstruction": {"parts": [{"text": system_instruction}]},
+        "contents": [{"parts": [{"text": pregunta}]}],
     }
     if response_schema:
         body["generationConfig"] = {
             "responseMimeType": "application/json",
-            "responseSchema": response_schema
+            "responseSchema": response_schema,
         }
     return url, body
 
@@ -50,27 +50,39 @@ def enviar_peticion(url: str, body: dict) -> dict:
 
 def extraer_texto(datos: dict) -> str:
     cprint.ok("Tokens prompt:", datos["usageMetadata"]["promptTokenCount"])
-    cprint.ok("Tokens candidates:",
-              datos["usageMetadata"]["candidatesTokenCount"])
+    cprint.ok("Tokens candidates:", datos["usageMetadata"]["candidatesTokenCount"])
     cprint.ok("Tokens total:", datos["usageMetadata"]["totalTokenCount"])
     return datos["candidates"][0]["content"]["parts"][0]["text"]
 
+
 def parsear_respuesta_json(texto):
-    texto_limpio = texto.strip() # Elimina espacios en blanco al inicio y al final
-    texto_limpio = re.sub(r"^```(?:json)?\s*", "", texto_limpio) # Elimina el bloque de código inicial si es md
-    texto_limpio = re.sub(r"\s*```$", "", texto_limpio) # Elimina el bloque de código final si es md
+    texto_limpio = texto.strip()  # Elimina espacios en blanco al inicio y al final
+    texto_limpio = re.sub(
+        r"^```(?:json)?\s*", "", texto_limpio
+    )  # Elimina el bloque de código inicial si es md
+    texto_limpio = re.sub(
+        r"\s*```$", "", texto_limpio
+    )  # Elimina el bloque de código final si es md
     try:
-        datos = json.loads(texto_limpio) # Intenta convertir el texto limpio a un diccionario de Python
+        datos = json.loads(
+            texto_limpio
+        )  # Intenta convertir el texto limpio a un diccionario de Python
     except json.JSONDecodeError:
-        raise ValueError("La respuesta del modelo no es JSON válido.") # Si no es válido, lanza un error
+        raise ValueError(
+            "La respuesta del modelo no es JSON válido."
+        )  # Si no es válido, lanza un error
     if "rta" not in datos or "fuente" not in datos:
-        raise ValueError("La respuesta no tiene la estructura esperada.") # Si no tiene las claves esperadas, lanza un error
-    return datos # Devuelve el diccionario con las claves "rta" y "fuente"
+        raise ValueError(
+            "La respuesta no tiene la estructura esperada."
+        )  # Si no tiene las claves esperadas, lanza un error
+    return datos  # Devuelve el diccionario con las claves "rta" y "fuente"
 
 
-def obtener_dato_de_prueba(pregunta: str, system_instruction: str, response_schema: dict = None) -> str | None:
+def obtener_dato_de_prueba(
+    pregunta: str, system_instruction: str, response_schema: dict = None
+) -> str | None:
     try:
-        url, body = armar_peticion(pregunta, system_instruction,response_schema)
+        url, body = armar_peticion(pregunta, system_instruction, response_schema)
         datos = enviar_peticion(url, body)
         costo = calcular_costo_peticion(datos, 0.0000003, 0.0000025)
         cprint.info(f"Costo estimado de la petición: {costo}")
@@ -99,27 +111,39 @@ def test_latencia(ciclos: int = 5):
         latencias.append(duracion)
     latencia_promedio = sum(latencias) / len(latencias)
     cprint.info(
-        f"Latencia promedio después de {ciclos} ciclos: {latencia_promedio} segundos")
+        f"Latencia promedio después de {ciclos} ciclos: {latencia_promedio} segundos"
+    )
 
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    cprint.ok(obtener_dato_de_prueba(
-        "¿Cuál es la capital legislativa de Sudafrica?", "Da respuestas de una sola palabra", None))
-    cprint.ok(obtener_dato_de_prueba(
-        "¿Cuál es la capital legislativa de Sudafrica?", "", None))
-    cprint.ok(obtener_dato_de_prueba(
-        "¿Cuál es la capital legislativa de Sudafrica?",
-        "Utiliza solo formato JSON sin markdown, claves: rta:str y fuente:str",
-        None))
-    cprint.err(obtener_dato_de_prueba(
-        "¿Cuál es la capital legislativa de Sudafrica?",
-        "Da respuestas de una sola palabra",
-        {
-            "type": "OBJECT",
-            "properties": {
-                "rta": {"type": "STRING"},
-                "fuente": {"type": "STRING"}
+    cprint.ok(
+        obtener_dato_de_prueba(
+            "¿Cuál es la capital legislativa de Sudafrica?",
+            "Da respuestas de una sola palabra",
+            None,
+        )
+    )
+    cprint.ok(
+        obtener_dato_de_prueba(
+            "¿Cuál es la capital legislativa de Sudafrica?", "", None
+        )
+    )
+    cprint.ok(
+        obtener_dato_de_prueba(
+            "¿Cuál es la capital legislativa de Sudafrica?",
+            "Utiliza solo formato JSON sin markdown, claves: rta:str y fuente:str",
+            None,
+        )
+    )
+    cprint.err(
+        obtener_dato_de_prueba(
+            "¿Cuál es la capital legislativa de Sudafrica?",
+            "Da respuestas de una sola palabra",
+            {
+                "type": "OBJECT",
+                "properties": {"rta": {"type": "STRING"}, "fuente": {"type": "STRING"}},
+                "required": ["rta", "fuente"],
             },
-            "required": ["rta", "fuente"]
-        }))
+        )
+    )

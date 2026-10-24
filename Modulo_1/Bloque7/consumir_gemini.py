@@ -6,9 +6,8 @@ from cprint import cprint
 load_dotenv()
 
 
-
 def armar_peticion(pregunta):
-    if(type(pregunta) != str):
+    if type(pregunta) != str:
         raise ValueError("La pregunta debe ser una cadena de texto.")
     api_key = os.getenv("AI_API_KEY")
     modelo = "gemini-3.5-flash-lite"
@@ -16,12 +15,15 @@ def armar_peticion(pregunta):
     body = {"contents": [{"parts": [{"text": pregunta}]}]}
     return url, body
 
+
 def enviar_peticion(url, body):
     respuesta = requests.post(url, json=body)
     return respuesta.json()
 
+
 def extraer_texto(datos):
     return datos["candidates"][0]["content"]["parts"][0]["text"]
+
 
 def obtener_dato_de_prueba(pregunta):
     try:
@@ -34,6 +36,7 @@ def obtener_dato_de_prueba(pregunta):
     except Exception as e:
         cprint.fatal(f"Error inesperado: {e}")
         return None
+
 
 # Ejemplo de uso
 if __name__ == "__main__":

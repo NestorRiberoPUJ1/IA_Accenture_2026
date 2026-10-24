@@ -5,6 +5,7 @@ from cprint import cprint
 
 load_dotenv()
 
+
 def obtener_dato_de_prueba(pregunta):
     api_key = os.getenv("AI_API_KEY")
     modelo = "gemini-3.5-flash-lite"
@@ -14,6 +15,7 @@ def obtener_dato_de_prueba(pregunta):
     datos = respuesta.json()
     return datos["candidates"][0]["content"]["parts"][0]["text"]
 
+
 def armar_peticion(pregunta):
     api_key = os.getenv("AI_API_KEY")
     modelo = "gemini-3.5-flash-lite"
@@ -21,12 +23,15 @@ def armar_peticion(pregunta):
     body = {"contents": [{"parts": [{"text": pregunta}]}]}
     return url, body
 
+
 def enviar_peticion(url, body):
     respuesta = requests.post(url, json=body)
     return respuesta.json()
 
+
 def extraer_texto(datos):
     return datos["candidates"][0]["content"]["parts"][0]["text"]
+
 
 def obtener_dato_de_prueba_refactorizado(pregunta):
     url, body = armar_peticion(pregunta)

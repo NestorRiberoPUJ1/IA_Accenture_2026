@@ -8,20 +8,16 @@ load_dotenv()
 
 url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"
 
-payload = json.dumps({
-  "contents": [
+payload = json.dumps(
     {
-      "parts": [
-        {
-          "text": "Explicame como funciona la NBA en 20 palabras"
-        }
-      ]
+        "contents": [
+            {"parts": [{"text": "Explicame como funciona la NBA en 20 palabras"}]}
+        ]
     }
-  ]
-})
+)
 headers = {
-  'x-goog-api-key': os.getenv("AI_API_KEY"),
-  'Content-Type': 'application/json'
+    "x-goog-api-key": os.getenv("AI_API_KEY"),
+    "Content-Type": "application/json",
 }
 
 try:

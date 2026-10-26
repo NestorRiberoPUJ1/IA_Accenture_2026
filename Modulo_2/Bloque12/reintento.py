@@ -34,8 +34,12 @@ def con_reintento(
             time.sleep(espera_segundos)
 
 
-#cuerpo = {"contents": [{"parts": [{"text": "Hola"}]}]}
-#respuesta = con_reintento(lambda: enviar_peticion(cuerpo))
-#print(respuesta)
+# cuerpo = {"contents": [{"parts": [{"text": "Hola"}]}]}
+# respuesta = con_reintento(lambda: enviar_peticion(cuerpo))
+# print(respuesta)
 
-response=  con_reintento(lambda:obtener_dato_de_prueba("¿Cuál es la capital de Escocia? Dame solo el nombre","", None))
+response = con_reintento(
+    lambda: obtener_dato_de_prueba(
+        "¿Cuál es la capital de Escocia? Dame solo el nombre", "", None
+    )
+)

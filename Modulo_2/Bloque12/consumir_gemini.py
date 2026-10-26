@@ -109,7 +109,7 @@ def obtener_dato_de_prueba(
         return None
     except ValueError as e:
         cprint.fatal(f"Error de valor: {e}")
-        return 
+        return
     except Exception as e:
         cprint.fatal(f"Error inesperado: {e}")
         return None

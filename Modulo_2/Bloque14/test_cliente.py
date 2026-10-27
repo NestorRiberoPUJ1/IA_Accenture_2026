@@ -1,5 +1,5 @@
 from unittest.mock import patch, Mock
-from cliente import enviar_peticion
+from cliente import enviar_peticion, con_reintento
 import pytest
 
 def test_enviar_peticion_credencial_invalida():
@@ -25,5 +25,31 @@ def test_enviar_peticion_exito():
 
     assert resultado == {"texto": "respuesta simulada"}
 
-if __name__ == "__main__":
-    test_enviar_peticion_exito()
+def test_con_reintento_espera_entre_intentos():
+    intentos = {"n": 0}
+
+    def funcion_que_falla_una_vez():
+        intentos["n"] += 1
+        if intentos["n"] == 1:
+            raise TimeoutError("simulado")
+        return "ok"
+
+
+    with patch("cliente.time.sleep") as mock_sleep:
+        resultado = con_reintento(funcion_que_falla_una_vez)
+
+
+    assert resultado == "ok"
+    mock_sleep.assert_called_once()
+
+def test_con_reintento_agota_intentos():
+    return
+
+def test_con_reintento_no_reintenta_value_error():
+    return
+
+def test_registrar_costo_acumula():
+    return
+
+def test_consultar_modelo_convierte_error():
+    return

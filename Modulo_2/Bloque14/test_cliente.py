@@ -1,6 +1,12 @@
 from unittest.mock import patch, Mock
-from cliente import enviar_peticion, con_reintento
+from cliente import enviar_peticion, con_reintento, consultar_modelo
 import pytest
+import cliente
+
+@pytest.fixture(autouse=True)
+def reiniciar_costo_total():
+    cliente.costo_total_sesion = 0
+    yield
 
 def test_enviar_peticion_credencial_invalida():
     respuesta_falsa = Mock(status_code=401)
@@ -43,13 +49,27 @@ def test_con_reintento_espera_entre_intentos():
     mock_sleep.assert_called_once()
 
 def test_con_reintento_agota_intentos():
-    return
+    def siempre_falla():
+        raise TimeoutError("simulado")
+
+    with patch("cliente.time.sleep"):
+        with pytest.raises(TimeoutError):
+            con_reintento(siempre_falla, intentos=3)
 
 def test_con_reintento_no_reintenta_value_error():
     return
 
 def test_registrar_costo_acumula():
-    return
+    respuesta_falsa = {"usageMetadata": {"totalTokenCount": 1000}}
+    costo = cliente.registrar_costo(respuesta_falsa)
+
+    assert costo == cliente.COSTO_POR_1000_TOKENS
+    assert cliente.costo_total_sesion == cliente.COSTO_POR_1000_TOKENS
 
 def test_consultar_modelo_convierte_error():
-    return
+    error_simulado = TimeoutError("simulado")
+
+    with patch("cliente.con_reintento", side_effect=error_simulado):
+        with pytest.raises(RuntimeError):
+            consultar_modelo("pregunta de prueba")
+

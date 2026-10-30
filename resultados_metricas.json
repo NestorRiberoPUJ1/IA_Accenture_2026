@@ -1,0 +1,23 @@
+[
+  {
+    "consulta": "¿Qué es Python?",
+    "respuesta": "**Python** es un lenguaje de programación de alto nivel, interpretado y de propósito general. Es conocido por su sintaxis clara y legible, lo que lo hace ideal para principiantes y muy potente para expertos en áreas como desarrollo web, inteligencia artificial, ciencia de datos y automatización.",
+    "precision": 0.15217391304347827,
+    "cobertura": 1.0,
+    "f1": 0.2641509433962264
+  },
+  {
+    "consulta": "¿Cuándo se creó Python?",
+    "respuesta": "Python fue lanzado oficialmente el **20 de febrero de 1991** por Guido van Rossum.",
+    "precision": 0.21428571428571427,
+    "cobertura": 0.6,
+    "f1": 0.3157894736842105
+  },
+  {
+    "consulta": "¿Qué es una lista en Python?",
+    "respuesta": "Una lista en Python es una estructura de datos ordenada y mutable que permite almacenar una colección de elementos, los cuales pueden ser de diferentes tipos (números, cadenas, otras listas, etc.) y se delimitan mediante corchetes `[]`.",
+    "precision": 0.19444444444444445,
+    "cobertura": 0.875,
+    "f1": 0.3181818181818182
+  }
+]

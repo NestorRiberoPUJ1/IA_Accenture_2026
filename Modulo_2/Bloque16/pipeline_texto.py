@@ -2,6 +2,8 @@
 from collections import Counter
 import re
 from cliente import consultar_modelo
+import json
+
 
 def limpiar_texto(texto: str) -> str:
     """Normaliza el texto: minúsculas y sin puntuación."""
@@ -68,16 +70,84 @@ def calcular_precision_cobertura_f1(
     return resultado
 
 
+def calcular_metricas(texto_referencia, texto_respuesta):
+
+    tokens_referencia = procesar_texto(texto_referencia)
+
+    tokens_respuesta = procesar_texto(texto_respuesta)
+
+    return calcular_precision_cobertura_f1(
+        tokens_referencia, tokens_respuesta
+    )
+def resumir_metricas(resultados):
+
+    if not resultados:
+        return {
+            "precision_promedio": 0,
+            "cobertura_promedio": 0,
+            "f1_promedio": 0,
+        }
+
+    n = len(resultados)
+
+    return {
+        "precision_promedio": sum(
+            r["precision"] for r in resultados
+        ) / n,
+
+        "cobertura_promedio": sum(
+            r["cobertura"] for r in resultados
+        ) / n,
+
+        "f1_promedio": sum(r["f1"] for r in resultados) / n,
+    }
+
 if __name__ == "__main__":
     pregunta = "Qué Colombiano estuvo cerca de ganarle a Federer en Wimbledon?"
-    instruccion ="Solo Nombre completo y marcador final solo texto"
-    referencia = "Es Alejandro Falla 3-1"
-    respuesta = consultar_modelo(pregunta,instruccion)
+    instruccion = "Solo Nombre completo"
+    referencia = "Alejandro Falla"
+    respuesta = consultar_modelo(pregunta, instruccion)
 
-    tokens_referencia = procesar_texto(referencia)
-    tokens_respuesta = procesar_texto(respuesta)
-
-    resultados = calcular_precision_cobertura_f1(tokens_referencia, tokens_respuesta)
+    resultados = calcular_metricas(referencia, respuesta)
     print(f"Resultados: {resultados}")
 
-    
+    casos = [
+
+        (
+            "¿Qué es Python?",
+            "Python es un lenguaje de programación interpretado.",
+        ),
+
+        ("¿Cuándo se creó Python?", "Python fue creado en 1991."),
+
+        (
+            "¿Qué es una lista en Python?",
+            "Una lista es una colección ordenada y modificable.",
+        ),
+
+    ]
+
+
+    resultados = []
+
+    for consulta, referencia in casos:
+
+        respuesta = consultar_modelo(consulta, "Proporciona una respuesta breve y precisa.")
+
+        metricas = calcular_metricas(referencia, respuesta)
+
+        resultados.append({
+            "consulta": consulta,
+            "respuesta": respuesta,
+            **metricas,
+        })
+
+
+    with open(
+        "resultados_metricas.json", "w", encoding="utf-8"
+    ) as archivo:
+
+        json.dump(resultados, archivo, indent=2, ensure_ascii=False)
+
+    resumen = resumir_metricas(resultados)
+    print(f"Resumen de métricas: {resumen}")

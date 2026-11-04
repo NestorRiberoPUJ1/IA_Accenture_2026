@@ -1,20 +1,18 @@
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
-
 from langchain_core.output_parsers import StrOutputParser
-
 from langchain_core.runnables import (
     RunnableBranch,
     RunnablePassthrough,
 )
 
-from cprint import cprint
-
+load_dotenv()
 modelo = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
 
 plantilla_clasificacion = PromptTemplate.from_template(
     "Clasifica el siguiente mensaje de soporte en una sola "
-    "palabra: pregunta, queja o sugerencia. Responde solo "
+    "palabra: pregunta, queja, trámite o sugerencia. Responde solo "
     "con esa palabra.\n\n{mensaje}"
 )
 
@@ -24,17 +22,6 @@ paso_clasificacion = (
     | StrOutputParser()
     | (lambda texto: texto.strip().lower())
 )
-
-queja = "No puedo acceder a mi cuenta, me sale un error."
-pregunta = "¿Cómo puedo cambiar mi contraseña?"
-sugerencia = "Sería útil tener un botón de 'Recordar mi contraseña' en la página de inicio de sesión."
-
-respuesta = paso_clasificacion.invoke({"mensaje": queja})
-cprint.fatal(respuesta)
-respuesta = paso_clasificacion.invoke({"mensaje": pregunta})
-cprint.fatal(respuesta)
-respuesta = paso_clasificacion.invoke({"mensaje": sugerencia})
-cprint.fatal(respuesta)
 
 cadena_pregunta = (
     PromptTemplate.from_template(
@@ -62,19 +49,38 @@ cadena_sugerencia = (
     | StrOutputParser()
 )
 
+cadena_tramite = (
+    PromptTemplate.from_template("" \
+    "Responde que el trámite ha sido recibido por el area"
+    "correspondiente y que se le dará seguimiento a la brevedad.\n\n{mensaje}")
+    | modelo
+    | StrOutputParser()
+)
 
 bifurcacion = RunnableBranch(
     (lambda x: x["categoria"] == "queja", cadena_queja),
     (lambda x: x["categoria"] == "sugerencia", cadena_sugerencia),
+    (lambda x: x["categoria"] == "trámite", cadena_tramite),
     cadena_pregunta,
 )
 
 cadena_con_enrutamiento = (
-    RunnablePassthrough.assign(categoria=paso_clasificacion).assign(respuesta=bifurcacion)
+    RunnablePassthrough.assign(categoria=paso_clasificacion)
+    | bifurcacion
 )
 
-resultado = cadena_con_enrutamiento.invoke(
+print(cadena_con_enrutamiento.invoke(
+    {"mensaje": "¿Cómo cambio mi contraseña?"}
+))
+
+print(cadena_con_enrutamiento.invoke(
     {"mensaje": "La app se cierra cada vez que subo una foto."}
-)
+))
 
-cprint.info(resultado["respuesta"])
+print(cadena_con_enrutamiento.invoke(
+    {"mensaje": "Estaría bueno que la app tuviera modo oscuro."}
+))
+
+print(cadena_con_enrutamiento.invoke(
+    {"mensaje": "Quiero actualizar mi dirección a calle Falsa 123, Ciudad Ejemplo."}
+))  

@@ -23,6 +23,8 @@ from langchain_core.runnables.history import (
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
+from pydantic import BaseModel, Field
+
 from dotenv import load_dotenv
 from cprint import cprint
 
@@ -56,42 +58,34 @@ def obtener_historial(session_id: str):
     return historiales[session_id]
 
 
-@tool(description="Selecciona la maquinaria adecuada según la consulta.")
-def seleccionar_maquinaria(consulta: str) -> str:
-    articulos = {
-        "mover tierra": (
-            "Para el movimiento de tierra, se recomienda utilizar excavadoras y cargadores frontales."
-        ),
-        "cimentacion": (
-            "Para la cimentación, se recomienda utilizar hormigoneras y compactadoras."
-        ),
-        "elevacion": (
-            "Para la elevación de materiales, se recomienda utilizar grúas y montacargas."
-        ),
-    }
-    for clave, texto in articulos.items():
-        if clave in consulta.lower():
-            return texto
-    return "No encontré información para esa consulta."
+class ConsultaMaquinaria(BaseModel):
+    consulta: str = Field(
+        description=(""" Consulta del usuario sobre qué tipo de maquinas usar segun la actividad"""
+                     """ Las categorias son: [movimiento de tierra, cimentación, elevación]"""
+                     )
+    )
 
 
-@tool(description="Evalúa una expresión aritmética simple.")
-def calcular(expresion: str) -> str:
-    permitido = set("0123456789+-*/(). ")
-    if not set(expresion) <= permitido:
-        return "Expresión no permitida."
-    try:
-        return str(eval(expresion))
-    except Exception as e:
-        return f"Error al evaluar la expresión: {e}"
+@tool(
+    "escoger_maquinaria_segun_actividad",
+    args_schema=ConsultaMaquinaria
+)
+def consultar_maquinaria(consulta: str) -> str:
+    """Consulta sobre qué tipo de maquinaria usar según la actividad."""
+    if "movimiento de tierra" in consulta.lower():
+        return "Para movimiento de tierra, se recomienda usar excavadoras y bulldozers."
+    elif "cimentación" in consulta.lower():
+        return "Para cimentación, se recomienda usar pilotes y grúas."
+    elif "elevación" in consulta.lower():
+        return "Para elevación, se recomienda usar grúas torre y montacargas."
+    else:
+        return "No se encontró una recomendación específica para la consulta proporcionada."
 
+    
 
 if __name__ == "__main__":
-    resultado = seleccionar_maquinaria.invoke(
-        "¿Qué maquina necesito mover tierra?")
-    cprint.err(resultado)
 
-    herramientas = [seleccionar_maquinaria, calcular]
+    herramientas = [consultar_maquinaria]
 
     prompt_agente = ChatPromptTemplate.from_messages([
         (
@@ -109,7 +103,7 @@ if __name__ == "__main__":
     ejecutor_agente = AgentExecutor(
         agent=agente,
         tools=herramientas,
-        verbose=False,
+        verbose=True,
         return_intermediate_steps=True
     )
     agente_normalizado = (
@@ -129,21 +123,17 @@ if __name__ == "__main__":
 
     # resultado = ejecutor_agente.invoke({"entrada": "¿Qué maquina necesito mover tierra?"})
     # cprint.err(resultado["output"])
-    resultado = agente_con_memoria.invoke(
-        {"entrada": "¿Cuánto es 12 * 5?"}, config)
-    cprint.err(resultado["output"])
-
-    resultado = agente_con_memoria.invoke(
-        {"entrada": "y si en vez de multiplicarlos los sumo cuánto es?"}, config)
-    cprint.err(resultado["output"])
-
-    config = {"configurable": {"session_id": "cliente_1234"}}
-    resultado = agente_con_memoria.invoke(
-        {"entrada": "divide el resultado por 3"}, config)
-    cprint.err(resultado["output"])
-
-    config = {"configurable": {"session_id": "cliente_123"}}
-    resultado = agente_con_memoria.invoke(
-        {"entrada": "divide el resultado por 3"}, config)
-    cprint.err(resultado["output"])
+    resultado_1 = agente_con_memoria.invoke(
+        {"entrada": "¿Qué maquina necesito nivelar un terreno?"}, config)
+    cprint.err(resultado_1["output"])
+    resultado_2 = agente_con_memoria.invoke(
+        {"entrada": "Voy a tomar la excavadora, ahora qué necesito para hacer los cimientos?"}, config)
+    cprint.err(resultado_2["output"])
+    resultado_3 = agente_con_memoria.invoke(
+        {"entrada": "Ahora que tengo los cimientos con pilotes, qué necesito para levantar la estructura?"}, config)
+    cprint.err(resultado_3["output"])
+    resultado_4 = agente_con_memoria.invoke(
+        {"entrada":"Dame la lista de todas las maquinas que he usado en esta sesión"}, config)
+    cprint.err(resultado_4["output"])
     
+

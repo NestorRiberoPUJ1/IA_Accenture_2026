@@ -3,6 +3,8 @@ import sys
 from datetime import datetime
 from langchain_core.tools import tool
 
+from cprint import cprint
+
 registro_aprobaciones = []
 
 def esperar_aprobacion(
@@ -40,7 +42,7 @@ def generar_reembolso(numero_pedido: str, monto: float) -> str:
         f"para el pedido {numero_pedido}. "
         f"¿Aprobar? (s/n): "
     )
-    aprobado = esperar_aprobacion(mensaje)
+    aprobado = esperar_aprobacion(mensaje) # Paso de aprobación humana
     registrar_aprobacion(
         herramienta="generar_reembolso",
         argumentos={"numero_pedido": numero_pedido, "monto": monto},
@@ -62,5 +64,5 @@ if __name__ == "__main__":
     resultado = generar_reembolso.invoke(
         {"numero_pedido": "PED789", "monto": 1500.0}
     )
-    print(resultado)
-    print("registro:", registro_aprobaciones)
+    cprint.err(resultado)
+    cprint.info("registro:", registro_aprobaciones)

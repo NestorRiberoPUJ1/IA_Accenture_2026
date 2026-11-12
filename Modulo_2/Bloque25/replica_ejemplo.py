@@ -79,6 +79,6 @@ def cargar_vectorstore(persist_directory):
     return Chroma(persist_directory=persist_directory, embedding_function=embeddings)
 
 if __name__ == "__main__":
-    indexar_corpus(corpus_ejemplo, "vectorstore_ejemplo/", 150, 20)
-    vectorstore = cargar_vectorstore("vectorstore_ejemplo/")
+    indexar_corpus(corpus_ejemplo, "vectorstore/", 150, 20)
+    vectorstore = cargar_vectorstore("vectorstore/")
     print(vectorstore._collection.count())
